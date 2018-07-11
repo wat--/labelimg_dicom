@@ -1213,7 +1213,8 @@ class MainWindow(QMainWindow, WindowMixin):
         selected_idx = self.dicomDialog.popUp()
         if selected_idx is None:
             return
-        self.mImgList = series_infos[selected_idx].dicom_paths
+        selected_series = series_infos[selected_idx]
+        self.mImgList = selected_series.sorted_paths()
 
         self.openNextImg()
         for imgPath in self.mImgList:

@@ -116,7 +116,8 @@ class DICOMReader(object):
 
                 # Add DICOM to series
                 series_info = series2info[series_key]
-                series_info.add_dicom(os.path.abspath(os.path.join(base_path, dcm_name)))
+                instance_num = dcm.InstanceNumber if 'InstanceNumber' in dcm else 0
+                series_info.add_dicom(instance_num, os.path.abspath(os.path.join(base_path, dcm_name)))
                 n += 1
                 if n % 100 == 0:
                     print('Collected {} DICOMs in {} series'.format(n, len(series2info)))
@@ -229,21 +230,34 @@ class DICOMSeriesInfo(object):
         self.description = description
         self.num_images = 0
         self.dicom_paths = []
+        self.instance_nums = []
+        self.is_sorted = True
 
     def __len__(self):
         return self.num_images
 
-    def add_dicom(self, dicom_path):
+    def add_dicom(self, instance_num, dicom_path):
         """Add a DICOM to this series.
 
         Args:
             dicom_path: Absolute path to DICOM file.
         """
+        self.is_sorted = False
         self.num_images += 1
+        self.instance_nums.append(instance_num)
         self.dicom_paths.append(dicom_path)
+
+    def sorted_paths(self):
+        """Get list of DICOM paths sorted by instance number."""
+        if not self.is_sorted:
+            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths),
+                                                               key=lambda x: x[0]))
+            self.is_sorted = True
+
+        return self.dicom_paths
 
     def to_str(self):
         """Get a string that can be displayed in a QT dialog window."""
-        s = '[%d] %s (%d images)' % (self.series_num, self.description, self.num_images)
+        s = '%d, %s, [%d x %d x %d]' % (self.series_num, self.description, self.num_images, self.height, self.width)
 
         return s
