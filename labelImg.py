@@ -221,6 +221,9 @@ class MainWindow(QMainWindow, WindowMixin):
         opendir = action('&Open Dir', self.openDirDialog,
                          'Ctrl+u', 'open', u'Open Dir')
 
+        openseries = action('&Open DICOMs', self.openDICOMsDialog,
+                            'Ctrl+d', 'open', u'Open DICOM series')
+
         changeSavedir = action('&Change Save Dir', self.changeSavedirDialog,
                                'Ctrl+r', 'open', u'Change default saved Annotation dir')
 
@@ -342,7 +345,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, save, saveAs, close, resetAll, quit),
+                                  open, opendir, openseries, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1),
@@ -379,7 +382,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.paintLabelsOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, opendir, openseries, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -400,11 +403,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, opendir, openseries, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
-            open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
+            open, opendir, openseries, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
 
@@ -478,7 +481,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.labelCoordinates = QLabel('')
         self.statusBar().addPermanentWidget(self.labelCoordinates)
 
-        # Open Dir if deafult file
+        # Open Dir if default file
         if self.filePath and os.path.isdir(self.filePath):
             self.openDirDialog(dirpath=self.filePath)
 
@@ -1117,7 +1120,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def scanAllImages(self, folderPath):
         extensions = ['.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
-        extensions += ['.%s' % DICOMReader.suffix]
         images = []
 
         for root, dirs, files in os.walk(folderPath):
@@ -1176,6 +1178,48 @@ class MainWindow(QMainWindow, WindowMixin):
                                                      '%s - Open Directory' % __appname__, defaultOpenDirPath,
                                                      QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
         self.importDirImages(targetDirPath)
+
+    def openDICOMsDialog(self, _value=False):
+        """Open a series of DICOMs."""
+        if not self.mayContinue():
+            return
+
+        if self.lastOpenDir and os.path.exists(self.lastOpenDir):
+            defaultOpenDirPath = self.lastOpenDir
+        else:
+            defaultOpenDirPath = os.path.dirname(self.filePath) if self.filePath else '.'
+
+        targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
+                             '%s - Open DICOM Directory' % __appname__, defaultOpenDirPath,
+                             QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+        self.importDirDICOMs(targetDirPath)
+
+    def importDirDICOMs(self, dirpath):
+        if not self.mayContinue() or not dirpath:
+            return
+
+        self.lastOpenDir = dirpath
+        self.dirname = dirpath
+        self.filePath = None
+        self.fileListWidget.clear()
+
+        # Collect all DICOMs and display dialog to select series
+        print('Scanning for dicoms at {}'.format(dirpath))
+        series_infos = DICOMReader.scanAllDICOMs(dirpath)
+        # TODO: Dialog to choose series
+        max_series = series_infos[0]
+        for s in series_infos[1:]:
+            is_bad_shape = (max_series.height, max_series.width != (512, 512))
+            if (is_bad_shape and (s.height, s.width) == (512, 512)) or (is_bad_shape and s.num_images > max_series.num_images):
+                max_series = s
+
+        print('Opening series with description: {}'.format(max_series.description))
+        self.mImgList = [ustr(p) for p in max_series.dicom_paths]
+
+        self.openNextImg()
+        for imgPath in self.mImgList:
+            item = QListWidgetItem(imgPath)
+            self.fileListWidget.addItem(item)
 
     def importDirImages(self, dirpath):
         if not self.mayContinue() or not dirpath:

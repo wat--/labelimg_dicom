@@ -2,6 +2,7 @@
 # Create by Christopher Chute <chutechristopher@gmail.com>
 
 import numpy as np
+import os
 import pydicom
 
 try:
@@ -10,6 +11,12 @@ except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
 DCM_EXT = 'dcm'
+DESC_KEY = 'description'
+HGHT_KEY = 'height'
+WDTH_KEY = 'width'
+NIMG_KEY = 'num_images'
+SNUM_KEY = 'series_num'
+PATH_KEY = 'path_list'
 
 
 class DICOMReader(object):
@@ -35,11 +42,7 @@ class DICOMReader(object):
             RuntimeWarning: If cannot find DICOM file at the given `dicom_path`.
         """
         # Read DICOM from disk
-        try:
-            with open(dicom_path, 'rb') as dicom_fh:
-                dcm = pydicom.dcmread(dicom_fh)
-        except IOError:
-            raise RuntimeWarning('Could not find DICOM at path {}'.format(dicom_path))
+        dcm = cls.readRawDICOM(dicom_path)
 
         # Convert to raw Hounsfield Units and apply window
         pixels = cls._dicomToRaw(dcm)
@@ -61,6 +64,67 @@ class DICOMReader(object):
             file_name: Name of file to check.
         """
         return file_name.endswith('.%s' % cls.suffix)
+
+    @staticmethod
+    def readRawDICOM(dicom_path, stop_before_pixels=False):
+        """Read a raw DICOM from disk.
+
+        Args:
+            dicom_path: Path to DICOM file to read.
+            stop_before_pixels: If true, stop reading before pixel_data.
+            Used for fast loading when you only need metadata.
+
+        Returns:
+            DICOM object.
+
+        Raises:
+            RuntimeWarning: If cannot find DICOM file at the given `dicom_path`.
+        """
+        try:
+            with open(dicom_path, 'rb') as dicom_fh:
+                dcm = pydicom.dcmread(dicom_fh, stop_before_pixels=stop_before_pixels)
+        except IOError:
+            raise RuntimeWarning('Could not load DICOM at path {}'.format(dicom_path))
+
+        return dcm
+
+    @staticmethod
+    def scanAllDICOMs(folderPath):
+        """Scan a directory tree for DICOMs.
+
+        Args:
+            folderPath: Root of directory tree to scan for DICOMs.
+
+        Returns:
+            List of tuples each of format (series_number, description, num_images, height, width, path_list).
+        """
+        series2info = {}
+        n = 0
+        for base_path, _, file_names in os.walk(folderPath):
+            dcm_names = set(f for f in file_names if f.endswith('.%s' % DICOMReader.suffix))
+            for dcm_name in dcm_names:
+                # Check if DICOM matches a series already seen
+                dcm = DICOMReader.readRawDICOM(os.path.join(base_path, dcm_name), stop_before_pixels=True)
+                series_key = (int(dcm.SeriesNumber),
+                              int(dcm.Rows) if 'Rows' in dcm else 0,
+                              int(dcm.Columns) if 'Columns' in dcm else 0)
+                if series_key not in series2info:
+                    # Add new series
+                    series_num, height, width = series_key
+                    description = dcm.SeriesDescription if 'SeriesDescription' in dcm else 'None'
+                    series2info[series_key] = DICOMSeriesInfo(series_num, height, width, description)
+
+                # Add DICOM to series
+                series_info = series2info[series_key]
+                series_info.add_dicom(os.path.abspath(os.path.join(base_path, dcm_name)))
+                n += 1
+                if n % 100 == 0:
+                    print('Collected {} DICOMs in {} series'.format(n, len(series2info)))
+
+        # Construct list of DICOMSeriesInfo objects
+        series_descriptors = [series2info[k] for k in sorted(series2info.keys())]
+
+        return series_descriptors
 
     @staticmethod
     def _dicomToRaw(dcm, dtype=np.int16):
@@ -155,3 +219,25 @@ class DICOMReader(object):
                     return qim.copy() if do_copy else qim
 
         raise NotImplementedError('Unsupported image format.')
+
+
+class DICOMSeriesInfo(object):
+    def __init__(self, series_num, height, width, description):
+        self.series_num = series_num
+        self.height = height
+        self.width = width
+        self.description = description
+        self.num_images = 0
+        self.dicom_paths = []
+
+    def __len__(self):
+        return self.num_images
+
+    def add_dicom(self, dicom_path):
+        """Add a DICOM to this series.
+
+        Args:
+            dicom_path: Absolute path to DICOM file.
+        """
+        self.num_images += 1
+        self.dicom_paths.append(dicom_path)
