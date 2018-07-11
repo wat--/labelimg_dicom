@@ -1,6 +1,6 @@
 # LabelImg
 
-Forked from [labelImg](https://github.com/tzutalin/labelImg/blob/master/labelImg.py>), updated to work with DICOMs.
+Forked from [labelImg](https://github.com/tzutalin/labelImg/blob/master/labelImg.py), updated to work with DICOMs.
 
 
 ## Installation
@@ -9,11 +9,11 @@ Forked from [labelImg](https://github.com/tzutalin/labelImg/blob/master/labelImg
 ### Mac OS X
 
 ```text
-    brew install qt  # will install qt-5.x.x
-    brew install libxml2
-    make qt5py3
-    python labelImg.py
-    python  labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
+brew install qt  # will install qt-5.x.x
+brew install libxml2
+make qt5py3
+python labelImg.py
+python  labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
 ```
 
 ### Linux (Ubuntu)
@@ -28,15 +28,15 @@ python3 labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
 
 ### Windows
 
-Download and install `Anaconda <https://www.anaconda.com/download/#download>`__ (Python 3+)
+Download and install [Anaconda](https://www.anaconda.com/download/#download).
 
-Open the Anaconda Prompt and go to the `labelImg <#labelimg>`__ directory
+Open the Anaconda Prompt and go to the `labelImg` directory.
 
 ```text
-    conda install pyqt=5
-    pyrcc5 -o resources.py resources.qrc
-    python labelImg.py
-    python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
+conda install pyqt=5
+pyrcc5 -o resources.py resources.qrc
+python labelImg.py
+python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
 ```
 
 
@@ -67,8 +67,9 @@ to load pre-defined classes
 
 ### Keyboard Shortcuts
 
-| `cmd + u` | Load all of the images from a directory  |
+| Keys      | Description                              |
 |-----------|------------------------------------------|
+| `cmd + u` | Load all of the images from a directory  |
 | `cmd + r` | Change the default annotation target dir |
 | `cmd + s` | Save                                     |
 | `cmd + d` | Copy the current label and rect box      |
@@ -79,7 +80,7 @@ to load pre-defined classes
 | `del`     | Delete the selected rect box             |
 | `cmd + +` | Zoom in                                  |
 | `cmd + -` | Zoom out                                 |
-| `↑→↓←`    | Move selected rect box                   |
+| `↑→↓←`    | Move selected rect box                  |
 
 
 ## License
