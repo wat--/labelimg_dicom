@@ -27,13 +27,14 @@ Updated to work with DICOMs.
 
 ### Annotate
 
-1. Build and launch using the instructions above.
-2. Click 'Change default saved annotation folder' in Menu/File
-3. Click 'Open Dir'
-4. Click 'Create RectBox'
-5. Click and release left mouse to select a region to annotate the rect
-   box
-6. You can use right mouse to drag the rect box to copy or move it
+1. Open Terminal, `cd` into the `label-img` directory
+2. Run `conda activate label-img`
+3. Run `python labelImg.py`
+4. Click 'Change default saved annotation folder' in Menu/File
+5. Click 'Open Dir'
+6. Click 'Create RectBox'
+7. Click and release left mouse to select a region to annotate the rect box
+8. You can use right mouse to drag the rect box to copy or move it
 
 The annotation will be saved to the folder you specify.
 
