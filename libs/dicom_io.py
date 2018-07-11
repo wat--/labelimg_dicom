@@ -9,13 +9,18 @@ try:
 except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
+DCM_EXT = 'dcm'
+
 
 class DICOMReader(object):
+
+    suffix = DCM_EXT
+
     def __init__(self):
         raise NotImplementedError('DICOMReader is a static class.')
 
     @classmethod
-    def read(cls, dicom_path, w_center=None, w_width=None):
+    def getQImage(cls, dicom_path, w_center=None, w_width=None):
         """Read a DICOM file from `file_path`.
 
         Args:
@@ -42,9 +47,9 @@ class DICOMReader(object):
             pixels = cls._applyWindow(pixels, w_center, w_width)
 
         # Convert to QImage
-        image_data = cls._toQImage(pixels)
+        q_image = cls._toQImage(pixels)
 
-        return image_data
+        return q_image
 
     @classmethod
     def isDICOMFile(cls, file_name):
@@ -55,7 +60,7 @@ class DICOMReader(object):
         Args:
             file_name: Name of file to check.
         """
-        return file_name.endswith('.dcm')
+        return file_name.endswith('.%s' % cls.suffix)
 
     @staticmethod
     def _dicomToRaw(dcm, dtype=np.int16):
@@ -118,10 +123,10 @@ class DICOMReader(object):
     @staticmethod
     def _toQImage(arr, do_copy=False):
         """Convert NumPy ndarray to QImage format.
-        
+
         Taken from:
             https://gist.github.com/smex/5287589
-        
+
         Args:
             arr: NumPy array to convert.
             do_copy: If true, copy the QImage file before returning.

@@ -977,9 +977,10 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.lineColor = QColor(*self.labelFile.lineColor)
                 self.fillColor = QColor(*self.labelFile.fillColor)
                 self.canvas.verified = self.labelFile.verified
+                image = QImage.fromData(self.imageData)
             elif DICOMReader.isDICOMFile(unicodeFilePath):
                 # Load DICOM file as windowed PNG
-                self.imageData = DICOMReader.read(unicodeFilePath, w_center=200, w_width=1000)
+                image = DICOMReader.getQImage(unicodeFilePath, w_center=200, w_width=1000)
                 self.labelFile = None
                 self.canvas.verified = False
             else:
@@ -988,8 +989,8 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.imageData = read(unicodeFilePath, None)
                 self.labelFile = None
                 self.canvas.verified = False
+                image = QImage.fromData(self.imageData)
 
-            image = QImage.fromData(self.imageData)
             if image.isNull():
                 self.errorMessage(u'Error opening file',
                                   u"<p>Make sure <i>%s</i> is a valid image file." % unicodeFilePath)
@@ -1114,6 +1115,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def scanAllImages(self, folderPath):
         extensions = ['.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
+        extensions += ['.%s' % DICOMReader.suffix]
         images = []
 
         for root, dirs, files in os.walk(folderPath):
@@ -1262,7 +1264,8 @@ class MainWindow(QMainWindow, WindowMixin):
             return
         path = os.path.dirname(ustr(self.filePath)) if self.filePath else '.'
         formats = ['*.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
-        filters = "Image & Label files (%s)" % ' '.join(formats + ['*%s' % LabelFile.suffix])
+        formats += ['*%s' % LabelFile.suffix, '*.%s' % DICOMReader.suffix]
+        filters = "Image & Label files (%s)" % ' '.join(formats)
         filename = QFileDialog.getOpenFileName(self, '%s - Choose Image or Label file' % __appname__, path, filters)
         if filename:
             if isinstance(filename, (tuple, list)):
