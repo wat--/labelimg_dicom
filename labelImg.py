@@ -29,6 +29,7 @@ except ImportError:
 import resources
 # Add internal libs
 from libs.constants import *
+from libs.dicom_io import DICOMReader
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
 from libs.settings import Settings
 from libs.shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
@@ -976,6 +977,11 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.lineColor = QColor(*self.labelFile.lineColor)
                 self.fillColor = QColor(*self.labelFile.fillColor)
                 self.canvas.verified = self.labelFile.verified
+            elif DICOMReader.isDICOMFile(unicodeFilePath):
+                # Load DICOM file as windowed PNG
+                self.imageData = DICOMReader.read(unicodeFilePath, w_center=200, w_width=1000)
+                self.labelFile = None
+                self.canvas.verified = False
             else:
                 # Load image:
                 # read data first and store for saving into label file.
