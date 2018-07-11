@@ -241,3 +241,9 @@ class DICOMSeriesInfo(object):
         """
         self.num_images += 1
         self.dicom_paths.append(dicom_path)
+
+    def to_str(self):
+        """Get a string that can be displayed in a QT dialog window."""
+        s = '[%d] %s (%d images)' % (self.series_num, self.description, self.num_images)
+
+        return s

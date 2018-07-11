@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import codecs
-import distutils.spawn
 import os.path
 import platform
-import re
 import sys
 import subprocess
 
 from functools import partial
-from collections import defaultdict
 
 try:
     from PyQt5.QtGui import *
@@ -29,6 +26,7 @@ except ImportError:
 import resources
 # Add internal libs
 from libs.constants import *
+from libs.dicom_dialog import DICOMDialog
 from libs.dicom_io import DICOMReader
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
 from libs.settings import Settings
@@ -1206,15 +1204,16 @@ class MainWindow(QMainWindow, WindowMixin):
         # Collect all DICOMs and display dialog to select series
         print('Scanning for dicoms at {}'.format(dirpath))
         series_infos = DICOMReader.scanAllDICOMs(dirpath)
-        # TODO: Dialog to choose series
-        max_series = series_infos[0]
-        for s in series_infos[1:]:
-            is_bad_shape = (max_series.height, max_series.width != (512, 512))
-            if (is_bad_shape and (s.height, s.width) == (512, 512)) or (is_bad_shape and s.num_images > max_series.num_images):
-                max_series = s
 
-        print('Opening series with description: {}'.format(max_series.description))
-        self.mImgList = [ustr(p) for p in max_series.dicom_paths]
+        if len(series_infos) == 0:
+            return
+
+        self.dicomDialog = DICOMDialog(parent=self, listItem=[s.to_str() for s in series_infos])
+
+        selected_idx = self.dicomDialog.popUp()
+        if selected_idx is None:
+            return
+        self.mImgList = series_infos[selected_idx].dicom_paths
 
         self.openNextImg()
         for imgPath in self.mImgList:
