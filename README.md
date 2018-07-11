@@ -1,46 +1,29 @@
 # LabelImg
 
-Forked from [labelImg](https://github.com/tzutalin/labelImg/blob/master/labelImg.py), updated to work with DICOMs.
+Forked from the
+[LabelImg](https://github.com/tzutalin/labelImg/blob/master/labelImg.py)
+repo by [tzutalin](https://github.com/tzutalin).
+Updated to work with DICOMs.
 
 
 ## Installation
 
+### Mac OS X and Linux (Ubuntu 16.04)
 
-### Mac OS X
-
-```text
-brew install qt  # will install qt-5.x.x
-brew install libxml2
-make qt5py3
-python labelImg.py
-python  labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-```
-
-### Linux (Ubuntu)
-
-```text
-sudo apt-get install pyqt5-dev-tools
-sudo pip3 install lxml
-make qt5py3
-python3 labelImg.py
-python3 labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-```
-
-### Windows
-
-Download and install [Anaconda](https://www.anaconda.com/download/#download).
-
-Open the Anaconda Prompt and go to the `labelImg` directory.
-
-```text
-conda install pyqt=5
-pyrcc5 -o resources.py resources.qrc
-python labelImg.py
-python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-```
+1. Make sure you have [Anaconda](https://www.anaconda.com/download/#download) or
+[Miniconda](https://conda.io/miniconda.html) installed.
+2. Clone this repo and `cd` into the top-level folder.
+3. Run the following
+    ```text
+    conda env create -f environment.yml
+    conda activate label-img
+    make qt4py2
+    python labelImg.py
+    ```
 
 
 ## Usage
+
 
 ### Annotate
 
@@ -61,26 +44,26 @@ You can refer to the below hotkeys to speed up your workflow.
 
 ### Create pre-defined classes
 
-You can edit the
-`data/predefined\_classes.txt <https://github.com/tzutalin/labelImg/blob/master/data/predefined_classes.txt>`__
-to load pre-defined classes
+You can edit the file in `data/predefined_classes.txt` to define your own
+classes.
+
 
 ### Keyboard Shortcuts
 
-| Keys      | Description                              |
-|-----------|------------------------------------------|
-| `cmd + u` | Load all of the images from a directory  |
-| `cmd + r` | Change the default annotation target dir |
-| `cmd + s` | Save                                     |
-| `cmd + d` | Copy the current label and rect box      |
-| `space`   | Flag the current image as verified       |
-| `w`       | Create a rect box                        |
-| `d`       | Next image                               |
-| `a`       | Previous image                           |
-| `del`     | Delete the selected rect box             |
-| `cmd + +` | Zoom in                                  |
-| `cmd + -` | Zoom out                                 |
-| `↑→↓←`    | Move selected rect box                  |
+| Keys        | Description                              |
+|-------------|------------------------------------------|
+| `cmd + u`   | Load all of the images from a directory  |
+| `cmd + r`   | Change the default annotation target dir |
+| `cmd + s`   | Save                                     |
+| `cmd + d`   | Copy the current label and bounding box  |
+| `space`     | Flag the current image as verified       |
+| `w`         | Create a bounding box                    |
+| `d`         | Next image                               |
+| `a`         | Previous image                           |
+| `del`       | Delete the selected bounding box         |
+| `cmd + '+'` | Zoom in                                  |
+| `cmd + '-'` | Zoom out                                 |
+| `↑ → ↓ ←`  | Move selected bounding box               |
 
 
 ## License

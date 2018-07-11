@@ -1,4 +1,4 @@
-name: labelImg
+name: label-img
 channels:
   - conda-forge
   - anaconda
