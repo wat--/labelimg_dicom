@@ -413,6 +413,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Application state.
         self.image = QImage()
+        self.imageShape = None
         self.filePath = ustr(defaultFilename)
         self.recentFiles = []
         self.maxRecent = 7
@@ -566,6 +567,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.labelList.clear()
         self.filePath = None
         self.imageData = None
+        self.imageShape = None
         self.labelFile = None
         self.canvas.resetState()
         self.labelCoordinates.clear()
@@ -782,8 +784,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 if ustr(annotationFilePath[-4:]) != ".xml":
                     annotationFilePath += XML_EXT
                 print ('Img: ' + self.filePath + ' -> Its xml: ' + annotationFilePath)
-                self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageData,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
+                self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageShape)
             elif self.usingYoloFormat is True:
                 if annotationFilePath[-4:] != ".txt":
                     annotationFilePath += TXT_EXT
@@ -981,6 +982,7 @@ class MainWindow(QMainWindow, WindowMixin):
             elif DICOMReader.isDICOMFile(unicodeFilePath):
                 # Load DICOM file as windowed PNG
                 image = DICOMReader.getQImage(unicodeFilePath, w_center=200, w_width=1000)
+                self.imageShape = [image.height(), image.width(), 1]
                 self.labelFile = None
                 self.canvas.verified = False
             else:
