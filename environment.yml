@@ -14,3 +14,4 @@ dependencies:
   - pyqt=4.11.4
   - python=2.7.15
   - qt=4.8.7
+  - tqdm=4.23.4

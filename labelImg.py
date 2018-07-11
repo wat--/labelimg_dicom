@@ -1202,6 +1202,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fileListWidget.clear()
 
         # Collect all DICOMs and display dialog to select series
+        if dirpath.endswith('/untitled'):
+            dirpath = dirpath[:-len('/untitled')]
         print('Scanning for dicoms at {}'.format(dirpath))
         series_infos = DICOMReader.scanAllDICOMs(dirpath)
 

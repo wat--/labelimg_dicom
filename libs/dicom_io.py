@@ -5,18 +5,13 @@ import numpy as np
 import os
 import pydicom
 
+from tqdm import tqdm
 try:
     from PyQt5.QtGui import QImage, qRgb
 except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
 DCM_EXT = 'dcm'
-DESC_KEY = 'description'
-HGHT_KEY = 'height'
-WDTH_KEY = 'width'
-NIMG_KEY = 'num_images'
-SNUM_KEY = 'series_num'
-PATH_KEY = 'path_list'
 
 
 class DICOMReader(object):
@@ -99,10 +94,9 @@ class DICOMReader(object):
             List of tuples each of format (series_number, description, num_images, height, width, path_list).
         """
         series2info = {}
-        n = 0
         for base_path, _, file_names in os.walk(folderPath):
             dcm_names = set(f for f in file_names if f.endswith('.%s' % DICOMReader.suffix))
-            for dcm_name in dcm_names:
+            for dcm_name in tqdm(dcm_names):
                 # Check if DICOM matches a series already seen
                 dcm = DICOMReader.readRawDICOM(os.path.join(base_path, dcm_name), stop_before_pixels=True)
                 series_key = (int(dcm.SeriesNumber),
@@ -118,9 +112,6 @@ class DICOMReader(object):
                 series_info = series2info[series_key]
                 instance_num = dcm.InstanceNumber if 'InstanceNumber' in dcm else 0
                 series_info.add_dicom(instance_num, os.path.abspath(os.path.join(base_path, dcm_name)))
-                n += 1
-                if n % 100 == 0:
-                    print('Collected {} DICOMs in {} series'.format(n, len(series2info)))
 
         # Construct list of DICOMSeriesInfo objects
         series_descriptors = [series2info[k] for k in sorted(series2info.keys())]
@@ -204,7 +195,6 @@ class DICOMReader(object):
 
         gray_color_table = [qRgb(i, i, i) for i in range(256)]
 
-        # TODO: Possibly add this line? `im = np.require(im, np.uint8, 'C')`
         if arr.dtype == np.uint8:
             if len(arr.shape) == 2:
                 qim = QImage(arr.data, arr.shape[1], arr.shape[0], arr.strides[0], QImage.Format_Indexed8)
@@ -250,14 +240,14 @@ class DICOMSeriesInfo(object):
     def sorted_paths(self):
         """Get list of DICOM paths sorted by instance number."""
         if not self.is_sorted:
-            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths),
-                                                               key=lambda x: x[0]))
+            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths)))
             self.is_sorted = True
 
         return self.dicom_paths
 
     def to_str(self):
         """Get a string that can be displayed in a QT dialog window."""
-        s = '%d, %s, [%d x %d x %d]' % (self.series_num, self.description, self.num_images, self.height, self.width)
+        s = '(Series %d) "%s" [%d x %d x %d]' % (self.series_num, self.description,
+                                                 self.height, self.width, self.num_images)
 
         return s
