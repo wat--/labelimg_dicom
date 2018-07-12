@@ -3,6 +3,7 @@
 
 import numpy as np
 import os
+import pickle
 import pydicom
 
 from tqdm import tqdm
@@ -12,6 +13,7 @@ except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
 DCM_EXT = 'dcm'
+META_FILENAME = 'dicom_metadata.pkl'
 
 
 class DICOMReader(object):
@@ -84,15 +86,29 @@ class DICOMReader(object):
         return dcm
 
     @staticmethod
-    def scanAllDICOMs(folderPath):
+    def scanAllDICOMs(folderPath, check_preloaded=True):
         """Scan a directory tree for DICOMs.
 
         Args:
             folderPath: Root of directory tree to scan for DICOMs.
+            check_preloaded: If true, check for preloaded metadata files to speed loading.
+            See scripts/preload_dicoms.py for more info.
 
         Returns:
             List of tuples each of format (series_number, description, num_images, height, width, path_list).
         """
+        if check_preloaded:
+            # Check for preloaded metadata to speed up loading.
+            series_infos = []
+            for base_path, _, file_names in os.walk(folderPath):
+                if META_FILENAME in file_names:
+                    with open(os.path.join(base_path, META_FILENAME), 'rb') as pkl_fh:
+                        preloaded_series_info = pickle.load(pkl_fh)
+                    series_infos += preloaded_series_info
+            if len(series_infos) > 0:
+                return series_infos
+
+        # No preloaded info
         series2info = {}
         for base_path, _, file_names in os.walk(folderPath):
             dcm_names = set(f for f in file_names if f.endswith('.%s' % DICOMReader.suffix))
@@ -114,9 +130,9 @@ class DICOMReader(object):
                 series_info.add_dicom(instance_num, os.path.abspath(os.path.join(base_path, dcm_name)))
 
         # Construct list of DICOMSeriesInfo objects
-        series_descriptors = [series2info[k] for k in sorted(series2info.keys())]
+        series_infos = [series2info[k] for k in sorted(series2info.keys())]
 
-        return series_descriptors
+        return series_infos
 
     @staticmethod
     def _dicomToRaw(dcm, dtype=np.int16):
