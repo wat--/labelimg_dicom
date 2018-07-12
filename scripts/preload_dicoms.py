@@ -1,3 +1,9 @@
+"""
+Script to preload DICOM series info. Run this script overnight, then
+loading a folder of DICOMs should take milliseconds instead of minutes
+on a spinning disk hard drive.
+"""
+
 import argparse
 import os
 import pickle
