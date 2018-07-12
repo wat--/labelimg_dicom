@@ -1215,10 +1215,21 @@ class MainWindow(QMainWindow, WindowMixin):
             item = QListWidgetItem(imgPath)
             self.fileListWidget.addItem(item)
 
-        # Change default save dir
         if len(self.mImgList) > 0:
             example_path = self.mImgList[0]
-            save_dir = os.path.join(os.path.dirname(example_path), BBOX_DIR_NAME)
+            base_dir = os.path.dirname(example_path)
+
+            # Print report if present
+            try:
+                with open(os.path.join(base_dir, REPORT_FILENAME), 'r') as fh:
+                    print('\n' * 20)
+                    print('Report:\n{}'.format(fh.read()))
+            except OSError as e:
+                print(e.message)
+                pass
+
+            # Change default save dir
+            save_dir = os.path.join(base_dir, BBOX_DIR_NAME)
             try:
                 os.makedirs(save_dir)
             except OSError:

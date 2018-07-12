@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+cd ~/Developer/label-img/
+source activate label-img
+python labelImg.py
