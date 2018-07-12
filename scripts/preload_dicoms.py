@@ -8,9 +8,8 @@ import argparse
 import os
 import pickle
 
+from libs.constants import META_FILENAME
 from libs.dicom_io import DICOMReader
-
-META_FILENAME = 'dicom_metadata.pkl'
 
 
 def main(args):

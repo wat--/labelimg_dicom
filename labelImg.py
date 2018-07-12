@@ -1196,10 +1196,9 @@ class MainWindow(QMainWindow, WindowMixin):
         self.filePath = None
         self.fileListWidget.clear()
 
-        # Collect all DICOMs and display dialog to select series
+        # Collect all DICOMs and ask user to select series
         print('Scanning for dicoms at {}'.format(dirpath))
         series_infos = DICOMReader.scanAllDICOMs(dirpath)
-
         if len(series_infos) == 0:
             return
 
@@ -1215,6 +1214,17 @@ class MainWindow(QMainWindow, WindowMixin):
         for imgPath in self.mImgList:
             item = QListWidgetItem(imgPath)
             self.fileListWidget.addItem(item)
+
+        # Change default save dir
+        if len(self.mImgList) > 0:
+            example_path = self.mImgList[0]
+            save_dir = os.path.join(os.path.dirname(example_path), BBOX_DIR_NAME)
+            try:
+                os.makedirs(save_dir)
+            except OSError:
+                pass
+            print('Default save dir changed to: {}'.format(save_dir))
+            self.defaultSaveDir = save_dir
 
     def importDirImages(self, dirpath):
         if not self.mayContinue() or not dirpath:
@@ -1249,7 +1259,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.saveFile()
 
     def openPrevImg(self, _value=False):
-        # Proceding prev image without dialog if having any label
+        # Proceeding prev image without dialog if having any label
         if self.autoSaving.isChecked():
             if self.defaultSaveDir is not None:
                 if self.dirty is True:

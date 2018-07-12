@@ -6,6 +6,7 @@ import os
 import pickle
 import pydicom
 
+from libs.constants import META_FILENAME
 from tqdm import tqdm
 try:
     from PyQt5.QtGui import QImage, qRgb
@@ -13,7 +14,6 @@ except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
 DCM_EXT = 'dcm'
-META_FILENAME = 'dicom_metadata.pkl'
 
 
 class DICOMReader(object):
