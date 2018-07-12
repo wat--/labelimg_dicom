@@ -216,10 +216,10 @@ class MainWindow(QMainWindow, WindowMixin):
         open = action('&Open', self.openFile,
                       'Ctrl+O', 'open', u'Open image or label file')
 
-        opendir = action('&Open Dir', self.openDirDialog,
+        opendir = action('&Open Dir', self.openImagesDirDialog,
                          'Ctrl+u', 'open', u'Open Dir')
 
-        openseries = action('&Open DICOMs', self.openDICOMsDialog,
+        openDICOMs = action('&Open DICOMs', self.openDICOMsDirDialog,
                             'Ctrl+d', 'open', u'Open DICOM series')
 
         changeSavedir = action('&Change Save Dir', self.changeSavedirDialog,
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, openseries, save, saveAs, close, resetAll, quit),
+                                  open, opendir, openDICOMs, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1),
@@ -380,7 +380,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.paintLabelsOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, openseries, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, opendir, openDICOMs, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -401,11 +401,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, openseries, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, opendir, openDICOMs, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
-            open, opendir, openseries, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
+            open, opendir, openDICOMs, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
 
@@ -481,7 +481,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Open Dir if default file
         if self.filePath and os.path.isdir(self.filePath):
-            self.openDirDialog(dirpath=self.filePath)
+            self.openImagesDirDialog(dirpath=self.filePath)
 
     ## Support Functions ##
     def set_format(self, save_format):
@@ -1136,9 +1136,9 @@ class MainWindow(QMainWindow, WindowMixin):
             path = '.'
 
         dirpath = ustr(QFileDialog.getExistingDirectory(self,
-                                                       '%s - Save annotations to the directory' % __appname__, path,  QFileDialog.ShowDirsOnly
-                                                       | QFileDialog.DontResolveSymlinks))
-
+                                                        '%s - Save annotations to the directory' % __appname__,
+                                                        path,
+                                                        QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
         if dirpath is not None and len(dirpath) > 1:
             self.defaultSaveDir = dirpath
 
@@ -1156,41 +1156,36 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.filePath else '.'
         if self.usingPascalVocFormat:
             filters = "Open Annotation XML file (%s)" % ' '.join(['*.xml'])
-            filename = ustr(QFileDialog.getOpenFileName(self,'%s - Choose a xml file' % __appname__, path, filters))
+            filename = ustr(QFileDialog.getOpenFileName(self, '%s - Choose a xml file' % __appname__, path, filters))
             if filename:
                 if isinstance(filename, (tuple, list)):
                     filename = filename[0]
             self.loadPascalXMLByFilename(filename)
 
-    def openDirDialog(self, _value=False, dirpath=None):
+    def _openAnyDirDialog(self, scan_fn, _value=False):
         if not self.mayContinue():
             return
 
-        defaultOpenDirPath = dirpath if dirpath else '.'
         if self.lastOpenDir and os.path.exists(self.lastOpenDir):
             defaultOpenDirPath = self.lastOpenDir
         else:
             defaultOpenDirPath = os.path.dirname(self.filePath) if self.filePath else '.'
 
         targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
-                                                     '%s - Open Directory' % __appname__, defaultOpenDirPath,
-                                                     QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
-        self.importDirImages(targetDirPath)
+                                                              '%s - Open Directory' % __appname__,
+                                                              defaultOpenDirPath,
+                                                              QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+        if targetDirPath.endswith('/untitled') and not os.path.exists(targetDirPath):
+            targetDirPath = targetDirPath[:-len('/untitled')]
 
-    def openDICOMsDialog(self, _value=False):
+        scan_fn(targetDirPath)
+
+    def openImagesDirDialog(self, _value=False):
+        self._openAnyDirDialog(self.importDirImages, _value)
+
+    def openDICOMsDirDialog(self, _value=False):
         """Open a series of DICOMs."""
-        if not self.mayContinue():
-            return
-
-        if self.lastOpenDir and os.path.exists(self.lastOpenDir):
-            defaultOpenDirPath = self.lastOpenDir
-        else:
-            defaultOpenDirPath = os.path.dirname(self.filePath) if self.filePath else '.'
-
-        targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
-                             '%s - Open DICOM Directory' % __appname__, defaultOpenDirPath,
-                             QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
-        self.importDirDICOMs(targetDirPath)
+        self._openAnyDirDialog(self.importDirDICOMs, _value)
 
     def importDirDICOMs(self, dirpath):
         if not self.mayContinue() or not dirpath:
@@ -1202,8 +1197,6 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fileListWidget.clear()
 
         # Collect all DICOMs and display dialog to select series
-        if dirpath.endswith('/untitled'):
-            dirpath = dirpath[:-len('/untitled')]
         print('Scanning for dicoms at {}'.format(dirpath))
         series_infos = DICOMReader.scanAllDICOMs(dirpath)
 
