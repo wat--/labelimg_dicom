@@ -51,20 +51,19 @@ classes.
 
 ### Keyboard Shortcuts
 
-| Keys        | Description                              |
-|-------------|------------------------------------------|
-| `cmd + u`   | Load all of the images from a directory  |
-| `cmd + r`   | Change the default annotation target dir |
-| `cmd + s`   | Save                                     |
-| `cmd + d`   | Copy the current label and bounding box  |
-| `space`     | Flag the current image as verified       |
-| `w`         | Create a bounding box                    |
-| `d`         | Next image                               |
-| `a`         | Previous image                           |
-| `del`       | Delete the selected bounding box         |
-| `cmd + '+'` | Zoom in                                  |
-| `cmd + '-'` | Zoom out                                 |
-| `↑ → ↓ ←`  | Move selected bounding box               |
+| Keys           | Description                              |
+|----------------|------------------------------------------|
+| `w`            | Create a bounding box                    |
+| `d`            | Next image                               |
+| `a`            | Previous image                           |
+| `cmd + scroll` | Zoom in/out                              |
+| `cmd + s`      | Save                                     |
+| `cmd + d`      | Copy the current label and bounding box  |
+| `del`          | Delete the selected bounding box         |
+| `space`        | Mark the current image as verified       |
+| `cmd + '+'`    | Zoom in                                  |
+| `cmd + '-'`    | Zoom out                                 |
+| `↑ → ↓ ←`     | Move selected bounding box               |
 
 
 ## License
