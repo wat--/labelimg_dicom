@@ -982,7 +982,9 @@ class MainWindow(QMainWindow, WindowMixin):
                 image = QImage.fromData(self.imageData)
             elif DICOMReader.isDICOMFile(unicodeFilePath):
                 # Load DICOM file as windowed PNG
-                image = DICOMReader.getQImage(unicodeFilePath, w_center=200, w_width=1000)
+                image = DICOMReader.getQImage(unicodeFilePath,
+                                              w_center=self.settings.get(SETTING_DICOM_WLEVEL, 200),
+                                              w_width=self.settings.get(SETTING_DICOM_WWIDTH, 1000))
                 self.imageShape = [image.height(), image.width(), 1]
                 self.labelFile = None
                 self.canvas.verified = False
@@ -1109,6 +1111,8 @@ class MainWindow(QMainWindow, WindowMixin):
         settings[SETTING_AUTO_SAVE] = self.autoSaving.isChecked()
         settings[SETTING_SINGLE_CLASS] = self.singleClassMode.isChecked()
         settings[SETTING_PAINT_LABEL] = self.paintLabelsOption.isChecked()
+        settings[SETTING_DICOM_WLEVEL] = self.dicomWindowLevel
+        settings[SETTING_DICOM_WWIDTH] = self.dicomWindowWidth
         settings.save()
     ## User Dialogs ##
 
