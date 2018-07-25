@@ -33,6 +33,7 @@ from libs.settings import Settings
 from libs.shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
 from libs.canvas import Canvas
 from libs.zoomWidget import ZoomWidget
+from libs.adjustWindowLevelDialog import AdjustWindowLevelDialog
 from libs.labelDialog import LabelDialog
 from libs.colorDialog import ColorDialog
 from libs.labelFile import LabelFile, LabelFileError
@@ -109,7 +110,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.lastOpenDir = None
 
         self.dicomWindowLevel = self.settings.get(SETTING_DICOM_WLEVEL, 200)
-        self.dicomWindowWidth = self.settings.get(SETTING_DICOM_WLEVEL, 1000)
+        self.dicomWindowWidth = self.settings.get(SETTING_DICOM_WWIDTH, 1000)
 
         # Whether we need to save or not.
         self.dirty = False
@@ -124,6 +125,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Main widgets and related state.
         self.labelDialog = LabelDialog(parent=self, listItem=self.labelHist)
+        self.windowLevelDialog = AdjustWindowLevelDialog(parent=self)
 
         self.itemsToShapes = {}
         self.shapesToItems = {}
@@ -494,10 +496,13 @@ class MainWindow(QMainWindow, WindowMixin):
 
     ## Support Functions ##
     def adjustWindowLevelDialog(self):
-        level, width = 200, 1000
-        self.dicomWindowLevel = level
-        self.dicomWindowWidth = width
-        self.refreshImg()
+        newWidthLevel = self.windowLevelDialog.popUp(
+            w_width=self.settings.get(SETTING_DICOM_WWIDTH, 1000),
+            w_level=self.settings.get(SETTING_DICOM_WLEVEL, 200)
+        )
+        if newWidthLevel is not None:
+            self.dicomWindowWidth, self.dicomWindowLevel = newWidthLevel
+            self.refreshImg()
 
     def set_format(self, save_format):
         if save_format == FORMAT_PASCALVOC:
@@ -998,8 +1003,8 @@ class MainWindow(QMainWindow, WindowMixin):
             elif DICOMReader.isDICOMFile(unicodeFilePath):
                 # Load DICOM file as windowed PNG
                 image = DICOMReader.getQImage(unicodeFilePath,
-                                              w_level=self.dicomWindowLevel,
-                                              w_width=self.dicomWindowWidth)
+                                              w_width=self.dicomWindowWidth,
+                                              w_level=self.dicomWindowLevel)
                 self.imageShape = [image.height(), image.width(), 1]
                 self.labelFile = None
                 self.canvas.verified = False
@@ -1126,8 +1131,8 @@ class MainWindow(QMainWindow, WindowMixin):
         settings[SETTING_AUTO_SAVE] = self.autoSaving.isChecked()
         settings[SETTING_SINGLE_CLASS] = self.singleClassMode.isChecked()
         settings[SETTING_PAINT_LABEL] = self.paintLabelsOption.isChecked()
-        settings[SETTING_DICOM_WLEVEL] = self.dicomWindowLevel
         settings[SETTING_DICOM_WWIDTH] = self.dicomWindowWidth
+        settings[SETTING_DICOM_WLEVEL] = self.dicomWindowLevel
         settings.save()
     ## User Dialogs ##
 

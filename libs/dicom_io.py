@@ -24,13 +24,13 @@ class DICOMReader(object):
         raise NotImplementedError('DICOMReader is a static class.')
 
     @classmethod
-    def getQImage(cls, dicom_path, w_level=None, w_width=None):
+    def getQImage(cls, dicom_path, w_width=None, w_level=None):
         """Read a DICOM file from `file_path`.
 
         Args:
             dicom_path: Path to read DICOM file from.
-            w_level: Center for window to apply. If None, don't apply window.
             w_width: Width for window to apply. If None, don't apply window.
+            w_level: Center for window to apply. If None, don't apply window.
 
         Returns:
             QImage image data for DICOM file, windowed if `w_center` and `w_width` are not None.
