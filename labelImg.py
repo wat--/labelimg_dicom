@@ -108,6 +108,9 @@ class MainWindow(QMainWindow, WindowMixin):
         self.labelHist = []
         self.lastOpenDir = None
 
+        self.dicomWindowLevel = self.settings.get(SETTING_DICOM_WLEVEL, 200)
+        self.dicomWindowWidth = self.settings.get(SETTING_DICOM_WLEVEL, 1000)
+
         # Whether we need to save or not.
         self.dirty = False
 
@@ -362,6 +365,11 @@ class MainWindow(QMainWindow, WindowMixin):
             recentFiles=QMenu('Open &Recent'),
             labelList=labelMenu)
 
+        # Add dialog for adjusting window width and level
+        self.adjustWindowLevelOption = QAction('Adjust Window/Level', self)
+        self.adjustWindowLevelOption.setStatusTip('Adjust window width and level for viewing DICOMs.')
+        self.adjustWindowLevelOption.triggered.connect(self.adjustWindowLevelDialog)
+
         # Auto saving : Enable auto saving if pressing next
         self.autoSaving = QAction("Auto Saving", self)
         self.autoSaving.setCheckable(True)
@@ -383,6 +391,7 @@ class MainWindow(QMainWindow, WindowMixin):
                    (open, opendir, openDICOMs, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
+            self.adjustWindowLevelOption,
             self.autoSaving,
             self.singleClassMode,
             self.paintLabelsOption,
@@ -484,6 +493,12 @@ class MainWindow(QMainWindow, WindowMixin):
             self.openImagesDirDialog(dirpath=self.filePath)
 
     ## Support Functions ##
+    def adjustWindowLevelDialog(self):
+        level, width = 200, 1000
+        self.dicomWindowLevel = level
+        self.dicomWindowWidth = width
+        self.refreshImg()
+
     def set_format(self, save_format):
         if save_format == FORMAT_PASCALVOC:
             self.actions.save_format.setText(FORMAT_PASCALVOC)
@@ -983,8 +998,8 @@ class MainWindow(QMainWindow, WindowMixin):
             elif DICOMReader.isDICOMFile(unicodeFilePath):
                 # Load DICOM file as windowed PNG
                 image = DICOMReader.getQImage(unicodeFilePath,
-                                              w_center=self.settings.get(SETTING_DICOM_WLEVEL, 200),
-                                              w_width=self.settings.get(SETTING_DICOM_WWIDTH, 1000))
+                                              w_level=self.dicomWindowLevel,
+                                              w_width=self.dicomWindowWidth)
                 self.imageShape = [image.height(), image.width(), 1]
                 self.labelFile = None
                 self.canvas.verified = False
@@ -1314,6 +1329,9 @@ class MainWindow(QMainWindow, WindowMixin):
         if len(self.mImgList) <= 0:
             return
 
+        self.refreshImg()
+
+    def refreshImg(self):
         filename = None
         if self.filePath is None:
             filename = self.mImgList[0]

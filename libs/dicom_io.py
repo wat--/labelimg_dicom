@@ -24,12 +24,12 @@ class DICOMReader(object):
         raise NotImplementedError('DICOMReader is a static class.')
 
     @classmethod
-    def getQImage(cls, dicom_path, w_center=None, w_width=None):
+    def getQImage(cls, dicom_path, w_level=None, w_width=None):
         """Read a DICOM file from `file_path`.
 
         Args:
             dicom_path: Path to read DICOM file from.
-            w_center: Center for window to apply. If None, don't apply window.
+            w_level: Center for window to apply. If None, don't apply window.
             w_width: Width for window to apply. If None, don't apply window.
 
         Returns:
@@ -43,8 +43,8 @@ class DICOMReader(object):
 
         # Convert to raw Hounsfield Units and apply window
         pixels = cls._dicomToRaw(dcm)
-        if w_center is not None and w_width is not None:
-            pixels = cls._applyWindow(pixels, w_center, w_width)
+        if w_level is not None and w_width is not None:
+            pixels = cls._applyWindow(pixels, w_level, w_width)
 
         # Convert to QImage
         q_image = cls._toQImage(pixels)
@@ -103,7 +103,12 @@ class DICOMReader(object):
             for base_path, _, file_names in os.walk(folderPath):
                 if META_FILENAME in file_names:
                     with open(os.path.join(base_path, META_FILENAME), 'rb') as pkl_fh:
-                        preloaded_series_info = pickle.load(pkl_fh)
+                        try:
+                            preloaded_series_info = pickle.load(pkl_fh)
+                        except ValueError:
+                            # Unsupported pickle version. Load all info from scratch.
+                            series_infos = []
+                            break
                     series_infos += preloaded_series_info
             if len(series_infos) > 0:
                 return series_infos
