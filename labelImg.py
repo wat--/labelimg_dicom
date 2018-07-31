@@ -1248,7 +1248,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 with open(os.path.join(base_dir, REPORT_FILENAME), 'r') as fh:
                     print('\n' * 20)
                     print('Report:\n{}'.format(fh.read()))
-            except OSError as e:
+            except (IOError, OSError) as e:
                 print(e.message)
                 pass
 
@@ -1256,7 +1256,7 @@ class MainWindow(QMainWindow, WindowMixin):
             save_dir = os.path.join(base_dir, BBOX_DIR_NAME)
             try:
                 os.makedirs(save_dir)
-            except OSError:
+            except (IOError, OSError) as _:
                 pass
             print('Default save dir changed to: {}'.format(save_dir))
             self.defaultSaveDir = save_dir
