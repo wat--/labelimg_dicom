@@ -40,6 +40,7 @@ class Canvas(QWidget):
         self.shapes = []
         self.current = None
         self.selectedShape = None  # save the selected shape here
+        self.rememberedShape = None
         self.selectedShapeCopy = None
         self.drawingLineColor = QColor(0, 0, 255)
         self.drawingRectColor = QColor(0, 0, 255) 
@@ -383,6 +384,25 @@ class Canvas(QWidget):
             self.selectedShape = shape
             self.boundedShiftShape(shape)
             return shape
+
+    def rememberSelectedShape(self):
+        """Remember the currently selected shape."""
+        if self.selectedShape:
+            self.rememberedShape = self.selectedShape.copy()
+
+    def recallRememberedShape(self):
+        """Recall the remembered shape."""
+        rememberedShape = None
+
+        if self.rememberedShape:
+            rememberedShape = self.rememberedShape.copy()
+            self.deSelectShape()
+            self.shapes.append(rememberedShape)
+            rememberedShape.selected = True
+            self.selectedShape = rememberedShape
+            self.newShape.emit()
+
+        return rememberedShape
 
     def boundedShiftShape(self, shape):
         # Try to move in one direction, and if it fails in another.

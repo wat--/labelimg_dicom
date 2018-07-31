@@ -225,7 +225,7 @@ class MainWindow(QMainWindow, WindowMixin):
                          'Ctrl+u', 'open', u'Open Dir')
 
         openDICOMs = action('&Open DICOMs', self.openDICOMsDirDialog,
-                            'Ctrl+d', 'open', u'Open DICOM series')
+                            'Ctrl+P', 'open', u'Open DICOM series')
 
         changeSavedir = action('&Change Save Dir', self.changeSavedirDialog,
                                'Ctrl+r', 'open', u'Change default saved Annotation dir')
@@ -265,11 +265,18 @@ class MainWindow(QMainWindow, WindowMixin):
 
         create = action('Create\nRectBox', self.createShape,
                         'w', 'new', u'Draw a new Box', enabled=False)
+
         delete = action('Delete\nRectBox', self.deleteSelectedShape,
                         'Delete', 'delete', u'Delete', enabled=False)
+
         copy = action('&Duplicate\nRectBox', self.copySelectedShape,
-                      'Ctrl+D', 'copy', u'Create a duplicate of the selected Box',
-                      enabled=False)
+                      'Ctrl+D', 'copy', u'Create a duplicate of the selected Box', enabled=False)
+
+        remember = action('&Remember\nRectBox', self.rememberSelectedShape,
+                          'Ctrl+c', 'remember', u'Remember the selected Box', enabled=False)
+
+        recall = action('&Recall\nRectBox', self.recallRememberedShape,
+                        's', 'recall', u'Recall the remembered Box', enabled=False)
 
         advancedMode = action('&Advanced Mode', self.toggleAdvancedMode,
                               'Ctrl+Shift+A', 'expert', u'Switch to advanced mode',
@@ -278,6 +285,7 @@ class MainWindow(QMainWindow, WindowMixin):
         hideAll = action('&Hide\nRectBox', partial(self.togglePolygons, False),
                          'Ctrl+H', 'hide', u'Hide all Boxs',
                          enabled=False)
+
         showAll = action('&Show\nRectBox', partial(self.togglePolygons, True),
                          'Ctrl+A', 'hide', u'Show all Boxs',
                          enabled=False)
@@ -342,6 +350,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Store actions for further handling.
         self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close, resetAll = resetAll,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
+                              remember=remember, recall=recall,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
                               zoom=zoom, zoomIn=zoomIn, zoomOut=zoomOut, zoomOrg=zoomOrg,
@@ -350,9 +359,9 @@ class MainWindow(QMainWindow, WindowMixin):
                               fileMenuActions=(
                                   open, opendir, openDICOMs, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
-                              editMenu=(edit, copy, delete,
+                              editMenu=(edit, copy, delete, remember, recall,
                                         None, color1),
-                              beginnerContext=(create, edit, copy, delete),
+                              beginnerContext=(create, edit, copy, delete, remember, recall),
                               advancedContext=(createMode, editMode, edit, copy,
                                                delete, shapeLineColor, shapeFillColor),
                               onLoadActive=(
@@ -412,7 +421,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, openDICOMs, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, opendir, openDICOMs, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create,
+            copy, delete, remember, recall, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
@@ -568,6 +578,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dirty = False
         self.actions.save.setEnabled(False)
         self.actions.create.setEnabled(True)
+        self.actions.recall.setEnabled(True)
 
     def toggleActions(self, value=True):
         """Enable/Disable widgets which depend on an opened image."""
@@ -634,6 +645,7 @@ class MainWindow(QMainWindow, WindowMixin):
         assert self.beginner()
         self.canvas.setEditing(False)
         self.actions.create.setEnabled(False)
+        self.actions.recall.setEnabled(False)
 
     def toggleDrawingSensitive(self, drawing=True):
         """In the middle of drawing, toggling between modes should be disabled."""
@@ -644,6 +656,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.setEditing(True)
             self.canvas.restoreCursor()
             self.actions.create.setEnabled(True)
+            self.actions.recall.setEnabled(True)
 
     def toggleDrawMode(self, edit=True):
         self.canvas.setEditing(edit)
@@ -735,6 +748,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.labelList.clearSelection()
         self.actions.delete.setEnabled(selected)
         self.actions.copy.setEnabled(selected)
+        self.actions.remember.setEnabled(selected)
         self.actions.edit.setEnabled(selected)
         self.actions.shapeLineColor.setEnabled(selected)
         self.actions.shapeFillColor.setEnabled(selected)
@@ -785,6 +799,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.loadShapes(s)
 
     def saveLabels(self, annotationFilePath):
+        print('Saving labels')
         annotationFilePath = ustr(annotationFilePath)
         if self.labelFile is None:
             self.labelFile = LabelFile()
@@ -824,6 +839,16 @@ class MainWindow(QMainWindow, WindowMixin):
         self.addLabel(self.canvas.copySelectedShape())
         # fix copy and delete
         self.shapeSelectionChanged(True)
+
+    def rememberSelectedShape(self):
+        print('Remembering shape')
+        self.canvas.rememberSelectedShape()
+        self.setDirty()
+
+    def recallRememberedShape(self):
+        print('Recalling shape')
+        if self.canvas.recallRememberedShape() is not None:
+            self.shapeSelectionChanged(True)
 
     def labelSelectionChanged(self):
         item = self.currentItem()
@@ -874,6 +899,7 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.beginner():  # Switch to edit mode.
                 self.canvas.setEditing(True)
                 self.actions.create.setEnabled(True)
+                self.actions.recall.setEnabled(True)
             else:
                 self.actions.editMode.setEnabled(True)
             self.setDirty()
