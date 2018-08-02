@@ -253,6 +253,9 @@ class DICOMSeriesInfo(object):
         Args:
             dicom_path: Absolute path to DICOM file.
         """
+        if instance_num in self.instance_nums:
+            print('Warning: Ignoring duplicate instance in series: {}'.format(dicom_path))
+
         self.is_sorted = False
         self.num_images += 1
         self.instance_nums.append(instance_num)
@@ -261,7 +264,8 @@ class DICOMSeriesInfo(object):
     def sorted_paths(self):
         """Get list of DICOM paths sorted by instance number."""
         if not self.is_sorted:
-            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths)))
+            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths),
+                                                               key=lambda x: x[0]))
             self.is_sorted = True
 
         return self.dicom_paths
