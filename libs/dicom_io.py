@@ -255,6 +255,7 @@ class DICOMSeriesInfo(object):
         """
         if instance_num in self.instance_nums:
             print('Warning: Ignoring duplicate instance in series: {}'.format(dicom_path))
+            return
 
         self.is_sorted = False
         self.num_images += 1
