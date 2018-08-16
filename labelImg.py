@@ -5,6 +5,7 @@ import os.path
 import platform
 import sys
 import subprocess
+import time
 
 from functools import partial
 
@@ -102,6 +103,10 @@ class MainWindow(QMainWindow, WindowMixin):
         self.defaultSaveDir = defaultSaveDir
         self.usingPascalVocFormat = True
         self.usingYoloFormat = False
+
+        # Scrolling state
+        self.prevScrollTime = time.time()
+        self.scrollMomentum = 1
 
         # For loading all image under a directory
         self.mImgList = []
@@ -911,11 +916,19 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.resetAllLines()
 
     def scrollRequest(self, delta, orientation):
-        is_upwards_scroll = delta < 0
-        if is_upwards_scroll:
-            self.openNextImg()
+        if time.time() - self.prevScrollTime < 0.1:
+            self.scrollMomentum = min(8, self.scrollMomentum * 2)
         else:
-            self.openPrevImg()
+            self.scrollMomentum = 1
+
+        self.prevScrollTime = time.time()
+
+        is_upwards_scroll = delta < 0
+        for _ in range(self.scrollMomentum):
+            if is_upwards_scroll:
+                self.openNextImg()
+            else:
+                self.openPrevImg()
 
     def setZoom(self, value):
         self.actions.fitWidth.setChecked(False)
