@@ -913,9 +913,9 @@ class MainWindow(QMainWindow, WindowMixin):
     def scrollRequest(self, delta, orientation):
         is_upwards_scroll = delta < 0
         if is_upwards_scroll:
-            self.openPrevImg()
-        else:
             self.openNextImg()
+        else:
+            self.openPrevImg()
 
     def setZoom(self, value):
         self.actions.fitWidth.setChecked(False)
