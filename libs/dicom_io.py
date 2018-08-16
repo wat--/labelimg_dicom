@@ -251,6 +251,7 @@ class DICOMSeriesInfo(object):
         """Add a DICOM to this series.
 
         Args:
+            instance_num: Instance number of dicom to add.
             dicom_path: Absolute path to DICOM file.
         """
         if instance_num in self.instance_nums:

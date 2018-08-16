@@ -911,9 +911,11 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.resetAllLines()
 
     def scrollRequest(self, delta, orientation):
-        units = - delta / (8 * 15)
-        bar = self.scrollBars[orientation]
-        bar.setValue(bar.value() + bar.singleStep() * units)
+        is_upwards_scroll = delta < 0
+        if is_upwards_scroll:
+            self.openPrevImg()
+        else:
+            self.openNextImg()
 
     def setZoom(self, value):
         self.actions.fitWidth.setChecked(False)
