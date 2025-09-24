@@ -69,6 +69,33 @@ class DicomWindowLevelWidget(QWidget):
         level_layout.addWidget(self.level_value_label)
         layout.addLayout(level_layout)
 
+        # Medical Presets (compact version)
+        presets_layout = QHBoxLayout()
+        presets_layout.addWidget(QLabel("Preset:"))
+
+        self.preset_combo = QComboBox()
+        self.preset_combo.setMaximumWidth(120)
+
+        # Define medical presets (width, level) - same as dialog
+        self.medical_presets = {
+            "肺がん": (1500, -600),  # Default: lung cancer
+            "軟組織": (400, 40),
+            "骨": (1500, 400),
+            "腹部": (400, 50),
+            "脳": (100, 50),
+            "カスタム": (1000, 200),
+        }
+
+        for preset_name in self.medical_presets.keys():
+            self.preset_combo.addItem(preset_name)
+
+        # Set default to lung cancer
+        self.preset_combo.setCurrentText("肺がん")
+        self.preset_combo.currentTextChanged.connect(self.apply_preset)
+
+        presets_layout.addWidget(self.preset_combo)
+        layout.addLayout(presets_layout)
+
         # Buttons
         button_layout = QHBoxLayout()
 
@@ -115,8 +142,8 @@ class DicomWindowLevelWidget(QWidget):
         self.auto_adjust_btn.clicked.connect(self.auto_adjust_requested)
         self.reset_btn.clicked.connect(self.reset_values)
 
-        # Set fixed size
-        self.setFixedSize(250, 120)
+        # Set fixed size - increased height for preset selector
+        self.setFixedSize(250, 140)
 
         # Style the widget
         self.setStyleSheet("""
@@ -152,10 +179,19 @@ class DicomWindowLevelWidget(QWidget):
         """Get current slider values"""
         return self.width_slider.value(), self.level_slider.value()
 
+    def apply_preset(self, preset_name):
+        """Apply selected medical preset"""
+        if preset_name in self.medical_presets:
+            width, level = self.medical_presets[preset_name]
+            self.set_values(width, level)
+            self.windowLevelChanged.emit(width, level)
+
     def reset_values(self):
-        """Reset to default values"""
-        self.set_values(1000, 200)
-        self.windowLevelChanged.emit(1000, 200)
+        """Reset to lung cancer preset (default)"""
+        lung_preset_values = self.medical_presets["肺がん"]
+        self.set_values(*lung_preset_values)
+        self.preset_combo.setCurrentText("肺がん")
+        self.windowLevelChanged.emit(*lung_preset_values)
 
     def auto_adjust_requested(self):
         """Signal that auto-adjust is requested"""
