@@ -8,20 +8,20 @@ import pydicom
 
 from libs.constants import META_FILENAME
 from tqdm import tqdm
+
 try:
     from PyQt5.QtGui import QImage, qRgb
 except ImportError:
     from PyQt4.QtGui import QImage, qRgb
 
-DCM_EXT = 'dcm'
+DCM_EXT = "dcm"
 
 
 class DICOMReader(object):
-
     suffix = DCM_EXT
 
     def __init__(self):
-        raise NotImplementedError('DICOMReader is a static class.')
+        raise NotImplementedError("DICOMReader is a static class.")
 
     @classmethod
     def getQImage(cls, dicom_path, w_width=None, w_level=None):
@@ -60,7 +60,7 @@ class DICOMReader(object):
         Args:
             file_name: Name of file to check.
         """
-        return file_name.endswith('.%s' % cls.suffix)
+        return file_name.endswith(f".{cls.suffix}")
 
     @staticmethod
     def readRawDICOM(dicom_path, stop_before_pixels=False):
@@ -78,10 +78,10 @@ class DICOMReader(object):
             RuntimeWarning: If cannot find DICOM file at the given `dicom_path`.
         """
         try:
-            with open(dicom_path, 'rb') as dicom_fh:
+            with open(dicom_path, "rb") as dicom_fh:
                 dcm = pydicom.dcmread(dicom_fh, stop_before_pixels=stop_before_pixels)
         except IOError:
-            raise RuntimeWarning('Could not load DICOM at path {}'.format(dicom_path))
+            raise RuntimeWarning(f"Could not load DICOM at path {dicom_path}")
 
         return dcm
 
@@ -102,7 +102,7 @@ class DICOMReader(object):
             series_infos = []
             for base_path, _, file_names in os.walk(folderPath):
                 if META_FILENAME in file_names:
-                    with open(os.path.join(base_path, META_FILENAME), 'rb') as pkl_fh:
+                    with open(os.path.join(base_path, META_FILENAME), "rb") as pkl_fh:
                         try:
                             preloaded_series_info = pickle.load(pkl_fh)
                         except ValueError:
@@ -116,23 +116,35 @@ class DICOMReader(object):
         # No preloaded info
         series2info = {}
         for base_path, _, file_names in os.walk(folderPath):
-            dcm_names = set(f for f in file_names if f.endswith('.%s' % DICOMReader.suffix))
+            dcm_names = set(
+                f for f in file_names if f.endswith(f".{DICOMReader.suffix}")
+            )
             for dcm_name in tqdm(dcm_names):
                 # Check if DICOM matches a series already seen
-                dcm = DICOMReader.readRawDICOM(os.path.join(base_path, dcm_name), stop_before_pixels=True)
-                series_key = (int(dcm.SeriesNumber),
-                              int(dcm.Rows) if 'Rows' in dcm else 0,
-                              int(dcm.Columns) if 'Columns' in dcm else 0)
+                dcm = DICOMReader.readRawDICOM(
+                    os.path.join(base_path, dcm_name), stop_before_pixels=True
+                )
+                series_key = (
+                    int(dcm.SeriesNumber),
+                    int(dcm.Rows) if "Rows" in dcm else 0,
+                    int(dcm.Columns) if "Columns" in dcm else 0,
+                )
                 if series_key not in series2info:
                     # Add new series
                     series_num, height, width = series_key
-                    description = dcm.SeriesDescription if 'SeriesDescription' in dcm else 'None'
-                    series2info[series_key] = DICOMSeriesInfo(series_num, height, width, description)
+                    description = (
+                        dcm.SeriesDescription if "SeriesDescription" in dcm else "None"
+                    )
+                    series2info[series_key] = DICOMSeriesInfo(
+                        series_num, height, width, description
+                    )
 
                 # Add DICOM to series
                 series_info = series2info[series_key]
-                instance_num = dcm.InstanceNumber if 'InstanceNumber' in dcm else 0
-                series_info.add_dicom(instance_num, os.path.abspath(os.path.join(base_path, dcm_name)))
+                instance_num = dcm.InstanceNumber if "InstanceNumber" in dcm else 0
+                series_info.add_dicom(
+                    instance_num, os.path.abspath(os.path.join(base_path, dcm_name))
+                )
 
         # Construct list of DICOMSeriesInfo objects
         series_infos = [series2info[k] for k in sorted(series2info.keys())]
@@ -218,19 +230,37 @@ class DICOMReader(object):
 
         if arr.dtype == np.uint8:
             if len(arr.shape) == 2:
-                qim = QImage(arr.data, arr.shape[1], arr.shape[0], arr.strides[0], QImage.Format_Indexed8)
+                qim = QImage(
+                    arr.data,
+                    arr.shape[1],
+                    arr.shape[0],
+                    arr.strides[0],
+                    QImage.Format_Indexed8,
+                )
                 qim.setColorTable(gray_color_table)
                 return qim.copy() if do_copy else qim
 
             elif len(arr.shape) == 3:
                 if arr.shape[2] == 3:
-                    qim = QImage(arr.data, arr.shape[1], arr.shape[0], arr.strides[0], QImage.Format_RGB888)
+                    qim = QImage(
+                        arr.data,
+                        arr.shape[1],
+                        arr.shape[0],
+                        arr.strides[0],
+                        QImage.Format_RGB888,
+                    )
                     return qim.copy() if do_copy else qim
                 elif arr.shape[2] == 4:
-                    qim = QImage(arr.data, arr.shape[1], arr.shape[0], arr.strides[0], QImage.Format_ARGB32)
+                    qim = QImage(
+                        arr.data,
+                        arr.shape[1],
+                        arr.shape[0],
+                        arr.strides[0],
+                        QImage.Format_ARGB32,
+                    )
                     return qim.copy() if do_copy else qim
 
-        raise NotImplementedError('Unsupported image format.')
+        raise NotImplementedError("Unsupported image format.")
 
 
 class DICOMSeriesInfo(object):
@@ -255,7 +285,7 @@ class DICOMSeriesInfo(object):
             dicom_path: Absolute path to DICOM file.
         """
         if instance_num in self.instance_nums:
-            print('Warning: Ignoring duplicate instance in series: {}'.format(dicom_path))
+            print(f"Warning: Ignoring duplicate instance in series: {dicom_path}")
             return
 
         self.is_sorted = False
@@ -266,15 +296,15 @@ class DICOMSeriesInfo(object):
     def sorted_paths(self):
         """Get list of DICOM paths sorted by instance number."""
         if not self.is_sorted:
-            self.instance_nums, self.dicom_paths = zip(*sorted(zip(self.instance_nums, self.dicom_paths),
-                                                               key=lambda x: x[0]))
+            self.instance_nums, self.dicom_paths = zip(
+                *sorted(zip(self.instance_nums, self.dicom_paths), key=lambda x: x[0])
+            )
             self.is_sorted = True
 
         return self.dicom_paths
 
     def to_str(self):
         """Get a string that can be displayed in a QT dialog window."""
-        s = '(Series %d) "%s" [%d x %d x %d]' % (self.series_num, self.description,
-                                                 self.height, self.width, self.num_images)
+        s = f'(Series {self.series_num}) "{self.description}" [{self.height} x {self.width} x {self.num_images}]'
 
         return s

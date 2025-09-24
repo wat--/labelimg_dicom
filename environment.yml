@@ -4,14 +4,14 @@ channels:
   - anaconda
   - defaults
 dependencies:
-  - gdcm=2.8.4
-  - pydicom=1.1.0
-  - libxml2=2.9.8
-  - lxml=4.1.1
-  - numpy=1.14.5
-  - pillow=5.1.0
-  - pip=10.0.1
-  - pyqt=4.11.4
-  - python=2.7.15
-  - qt=4.8.7
-  - tqdm=4.23.4
+  - python=3.10
+  - pyqt=5.15.7
+  - qt=5.15.8
+  - gdcm>=2.8.4
+  - pydicom>=2.3.0
+  - libxml2>=2.9.8
+  - lxml>=4.6.0
+  - numpy>=1.21.0
+  - pillow>=8.0.0
+  - pip>=21.0.0
+  - tqdm>=4.60.0

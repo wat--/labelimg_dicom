@@ -4,8 +4,16 @@
 from setuptools import setup, find_packages
 from libs.version import __version__
 
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
+try:
+    with open('README.rst') as readme_file:
+        readme = readme_file.read()
+except FileNotFoundError:
+    # Fallback to README.md if README.rst doesn't exist
+    try:
+        with open('README.md') as readme_file:
+            readme = readme_file.read()
+    except FileNotFoundError:
+        readme = 'LabelImg is a graphical image annotation tool'
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
@@ -49,14 +57,12 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
     package_data={'data/predefined_classes.txt': ['data/predefined_classes.txt']},
     options={'py2app': OPTIONS},
