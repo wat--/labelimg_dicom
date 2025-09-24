@@ -1,5 +1,1 @@
-CAD-RADS 1
-CAD-RADS 2
-CAD-RADS 3
-CAD-RADS 4
-CAD-RADS 5
+ lung_cancer
