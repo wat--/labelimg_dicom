@@ -819,11 +819,15 @@ class MainWindow(QMainWindow, WindowMixin):
     def reloadCurrentDicomImage(self):
         """Reload current DICOM image with updated window/level settings."""
         if self.filePath and DICOMReader.isDICOMFile(self.filePath):
+            # Get display mode setting from dialog
+            display_mode = self.windowLevelDialog.getDisplayMode()
+
             # Reload the current DICOM file with new window/level settings
             image = DICOMReader.getQImage(
                 self.filePath,
                 w_width=self.dicomWindowWidth,
                 w_level=self.dicomWindowLevel,
+                force_invert=display_mode,
             )
             if not image.isNull():
                 self.image = image
@@ -1460,11 +1464,21 @@ class MainWindow(QMainWindow, WindowMixin):
                     )
 
                 # Load DICOM file as windowed PNG with auto-adjusted values
+                # Get display mode setting from dialog (default to ON for photometric interpretation)
+                display_mode = None  # Default to photometric interpretation mode ON
+                if hasattr(self.windowLevelDialog, "getDisplayMode"):
+                    display_mode = self.windowLevelDialog.getDisplayMode()
+
                 image = DICOMReader.getQImage(
                     unicodeFilePath,
                     w_width=self.dicomWindowWidth,
                     w_level=self.dicomWindowLevel,
+                    force_invert=display_mode,
                 )
+
+                # Update photometric interpretation info in dialog
+                if hasattr(self.windowLevelDialog, "updatePhotometricInfo"):
+                    self.windowLevelDialog.updatePhotometricInfo(unicodeFilePath)
                 self.imageShape = [image.height(), image.width(), 1]
                 self.labelFile = None
                 self.canvas.verified = False
