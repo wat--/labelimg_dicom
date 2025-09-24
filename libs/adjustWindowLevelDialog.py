@@ -181,20 +181,17 @@ class AdjustWindowLevelDialog(QDialog):
         photo_info_layout.addStretch()
         photo_layout.addLayout(photo_info_layout)
 
-        # Display mode controls
+        # Display mode controls - Simple ON/OFF for Photometric Interpretation
         display_mode_layout = QHBoxLayout()
 
-        self.auto_invert_checkbox = QCheckBox("Auto (従来のPhotometric Interpretation)")
-        self.auto_invert_checkbox.setChecked(
-            True
-        )  # デフォルトON: Photometric Interpretationを見るモード
-        self.auto_invert_checkbox.stateChanged.connect(self.onDisplayModeChanged)
+        self.photometric_mode_checkbox = QCheckBox(
+            "Photometric Interpretation を見るモード"
+        )
+        self.photometric_mode_checkbox.setChecked(True)  # デフォルトON
+        self.photometric_mode_checkbox.stateChanged.connect(self.onDisplayModeChanged)
 
-        self.force_invert_checkbox = QCheckBox("Force Invert (白黒反転)")
-        self.force_invert_checkbox.stateChanged.connect(self.onDisplayModeChanged)
-
-        display_mode_layout.addWidget(self.auto_invert_checkbox)
-        display_mode_layout.addWidget(self.force_invert_checkbox)
+        display_mode_layout.addWidget(self.photometric_mode_checkbox)
+        display_mode_layout.addStretch()
         photo_layout.addLayout(display_mode_layout)
 
         # Explanation text
@@ -423,34 +420,8 @@ class AdjustWindowLevelDialog(QDialog):
         self.windowLevelChanged.emit(*lung_preset_values)
 
     def onDisplayModeChanged(self):
-        """Handle display mode checkbox changes"""
-        # Ensure only one checkbox is selected at a time
-        sender = self.sender()
-
-        if (
-            sender == self.auto_invert_checkbox
-            and self.auto_invert_checkbox.isChecked()
-        ):
-            self.force_invert_checkbox.blockSignals(True)
-            self.force_invert_checkbox.setChecked(False)
-            self.force_invert_checkbox.blockSignals(False)
-        elif (
-            sender == self.force_invert_checkbox
-            and self.force_invert_checkbox.isChecked()
-        ):
-            self.auto_invert_checkbox.blockSignals(True)
-            self.auto_invert_checkbox.setChecked(False)
-            self.auto_invert_checkbox.blockSignals(False)
-        elif (
-            not self.auto_invert_checkbox.isChecked()
-            and not self.force_invert_checkbox.isChecked()
-        ):
-            # At least one must be selected - default to auto
-            self.auto_invert_checkbox.blockSignals(True)
-            self.auto_invert_checkbox.setChecked(True)
-            self.auto_invert_checkbox.blockSignals(False)
-
-        # Emit signal to update image display
+        """Handle photometric interpretation mode change"""
+        # Simple ON/OFF toggle - emit signal to update image display
         width_value = self.window_slider.value()
         level_value = self.level_slider.value()
         self.windowLevelChanged.emit(width_value, level_value)
@@ -467,12 +438,10 @@ class AdjustWindowLevelDialog(QDialog):
 
     def getDisplayMode(self):
         """Get current display mode setting"""
-        if self.force_invert_checkbox.isChecked():
-            return True  # Force invert
-        elif self.auto_invert_checkbox.isChecked():
-            return None  # Auto (based on photometric interpretation)
+        if self.photometric_mode_checkbox.isChecked():
+            return None  # Auto (based on photometric interpretation) - ON
         else:
-            return False  # No invert
+            return False  # Ignore photometric interpretation - OFF
 
     def getCurrentValues(self):
         """Get current window/level values"""
