@@ -185,7 +185,9 @@ class AdjustWindowLevelDialog(QDialog):
         display_mode_layout = QHBoxLayout()
 
         self.auto_invert_checkbox = QCheckBox("Auto (従来のPhotometric Interpretation)")
-        self.auto_invert_checkbox.setChecked(True)
+        self.auto_invert_checkbox.setChecked(
+            True
+        )  # デフォルトON: Photometric Interpretationを見るモード
         self.auto_invert_checkbox.stateChanged.connect(self.onDisplayModeChanged)
 
         self.force_invert_checkbox = QCheckBox("Force Invert (白黒反転)")
