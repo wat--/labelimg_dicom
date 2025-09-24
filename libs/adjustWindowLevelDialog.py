@@ -184,10 +184,8 @@ class AdjustWindowLevelDialog(QDialog):
         # Display mode controls - Simple ON/OFF for Photometric Interpretation
         display_mode_layout = QHBoxLayout()
 
-        self.photometric_mode_checkbox = QCheckBox(
-            "Photometric Interpretation を見るモード"
-        )
-        self.photometric_mode_checkbox.setChecked(True)  # デフォルトON
+        self.photometric_mode_checkbox = QCheckBox("Apply Photometric Interpretation")
+        self.photometric_mode_checkbox.setChecked(True)  # Default ON
         self.photometric_mode_checkbox.stateChanged.connect(self.onDisplayModeChanged)
 
         display_mode_layout.addWidget(self.photometric_mode_checkbox)
@@ -195,7 +193,7 @@ class AdjustWindowLevelDialog(QDialog):
         photo_layout.addLayout(display_mode_layout)
 
         # Explanation text
-        explanation = QLabel("MONOCHROME1: 黒=高輝度, MONOCHROME2: 白=高輝度")
+        explanation = QLabel("MONOCHROME1: Black=High, MONOCHROME2: White=High")
         explanation.setStyleSheet("font-size: 9pt; color: #888;")
         photo_layout.addWidget(explanation)
 
