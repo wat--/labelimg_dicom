@@ -24,13 +24,16 @@ class DICOMReader(object):
         raise NotImplementedError("DICOMReader is a static class.")
 
     @classmethod
-    def getQImage(cls, dicom_path, w_width=None, w_level=None):
+    def getQImage(cls, dicom_path, w_width=None, w_level=None, force_invert=None):
         """Read a DICOM file from `file_path`.
 
         Args:
             dicom_path: Path to read DICOM file from.
             w_width: Width for window to apply. If None, don't apply window.
             w_level: Center for window to apply. If None, don't apply window.
+            force_invert: Force inversion regardless of photometric interpretation.
+                         None=auto (based on photometric interpretation),
+                         True=force invert, False=no invert.
 
         Returns:
             QImage image data for DICOM file, windowed if `w_center` and `w_width` are not None.
@@ -45,6 +48,9 @@ class DICOMReader(object):
         pixels = cls._dicomToRaw(dcm)
         if w_level is not None and w_width is not None:
             pixels = cls._applyWindow(pixels, w_level, w_width)
+
+        # Apply photometric interpretation inversion
+        pixels = cls._applyPhotometricInterpretation(dcm, pixels, force_invert)
 
         # Convert to QImage
         q_image = cls._toQImage(pixels)
@@ -208,6 +214,60 @@ class DICOMReader(object):
         img = img.astype(np.uint8)
 
         return img
+
+    @staticmethod
+    def _applyPhotometricInterpretation(dcm, img, force_invert=None):
+        """Apply photometric interpretation to image data.
+
+        Args:
+            dcm: DICOM object containing photometric interpretation.
+            img: Image data (numpy array).
+            force_invert: Force inversion regardless of photometric interpretation.
+                         None=auto, True=force invert, False=no invert.
+
+        Returns:
+            Image data with photometric interpretation applied.
+        """
+        if img is None:
+            return img
+
+        # Get photometric interpretation from DICOM header
+        photometric = getattr(dcm, "PhotometricInterpretation", "MONOCHROME2")
+
+        # Determine if inversion should be applied
+        should_invert = False
+        if force_invert is not None:
+            should_invert = force_invert
+        else:
+            # Auto-detect based on photometric interpretation
+            should_invert = photometric == "MONOCHROME1"
+
+        if should_invert:
+            # Invert the image: 0 becomes max value, max becomes 0
+            if img.dtype == np.uint8:
+                img = 255 - img
+            else:
+                # For other data types, invert within the actual range
+                img_min, img_max = img.min(), img.max()
+                img = img_max + img_min - img
+
+        return img
+
+    @staticmethod
+    def getPhotometricInterpretation(dicom_path):
+        """Get photometric interpretation from DICOM file.
+
+        Args:
+            dicom_path: Path to DICOM file.
+
+        Returns:
+            String indicating photometric interpretation ('MONOCHROME1', 'MONOCHROME2', etc.)
+        """
+        try:
+            dcm = DICOMReader.readRawDICOM(dicom_path, stop_before_pixels=True)
+            return getattr(dcm, "PhotometricInterpretation", "MONOCHROME2")
+        except Exception:
+            return "MONOCHROME2"  # Default fallback
 
     @staticmethod
     def _toQImage(arr, do_copy=False):

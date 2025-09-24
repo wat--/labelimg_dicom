@@ -168,6 +168,41 @@ class AdjustWindowLevelDialog(QDialog):
         presets_group.setLayout(presets_layout)
         layout.addWidget(presets_group)
 
+        # Photometric Interpretation section
+        photo_group = QGroupBox("Display Mode")
+        photo_layout = QVBoxLayout()
+
+        # Photometric interpretation info
+        photo_info_layout = QHBoxLayout()
+        photo_info_layout.addWidget(QLabel("Photometric:"))
+        self.photo_info_label = QLabel("MONOCHROME2")
+        self.photo_info_label.setStyleSheet("color: #666; font-weight: bold;")
+        photo_info_layout.addWidget(self.photo_info_label)
+        photo_info_layout.addStretch()
+        photo_layout.addLayout(photo_info_layout)
+
+        # Display mode controls
+        display_mode_layout = QHBoxLayout()
+
+        self.auto_invert_checkbox = QCheckBox("Auto (従来のPhotometric Interpretation)")
+        self.auto_invert_checkbox.setChecked(True)
+        self.auto_invert_checkbox.stateChanged.connect(self.onDisplayModeChanged)
+
+        self.force_invert_checkbox = QCheckBox("Force Invert (白黒反転)")
+        self.force_invert_checkbox.stateChanged.connect(self.onDisplayModeChanged)
+
+        display_mode_layout.addWidget(self.auto_invert_checkbox)
+        display_mode_layout.addWidget(self.force_invert_checkbox)
+        photo_layout.addLayout(display_mode_layout)
+
+        # Explanation text
+        explanation = QLabel("MONOCHROME1: 黒=高輝度, MONOCHROME2: 白=高輝度")
+        explanation.setStyleSheet("font-size: 9pt; color: #888;")
+        photo_layout.addWidget(explanation)
+
+        photo_group.setLayout(photo_layout)
+        layout.addWidget(photo_group)
+
         # Buttons section
         button_layout = QHBoxLayout()
 
@@ -218,7 +253,9 @@ class AdjustWindowLevelDialog(QDialog):
         layout.addWidget(bb)
 
         self.setLayout(layout)
-        self.setFixedSize(400, 450)  # Increased size for medical presets
+        self.setFixedSize(
+            450, 600
+        )  # Increased size for medical presets and display mode
 
     def validate(self):
         try:
@@ -382,6 +419,58 @@ class AdjustWindowLevelDialog(QDialog):
         self.setValues(*lung_preset_values)
         self.preset_combo.setCurrentText("Lung (肺がん)")
         self.windowLevelChanged.emit(*lung_preset_values)
+
+    def onDisplayModeChanged(self):
+        """Handle display mode checkbox changes"""
+        # Ensure only one checkbox is selected at a time
+        sender = self.sender()
+
+        if (
+            sender == self.auto_invert_checkbox
+            and self.auto_invert_checkbox.isChecked()
+        ):
+            self.force_invert_checkbox.blockSignals(True)
+            self.force_invert_checkbox.setChecked(False)
+            self.force_invert_checkbox.blockSignals(False)
+        elif (
+            sender == self.force_invert_checkbox
+            and self.force_invert_checkbox.isChecked()
+        ):
+            self.auto_invert_checkbox.blockSignals(True)
+            self.auto_invert_checkbox.setChecked(False)
+            self.auto_invert_checkbox.blockSignals(False)
+        elif (
+            not self.auto_invert_checkbox.isChecked()
+            and not self.force_invert_checkbox.isChecked()
+        ):
+            # At least one must be selected - default to auto
+            self.auto_invert_checkbox.blockSignals(True)
+            self.auto_invert_checkbox.setChecked(True)
+            self.auto_invert_checkbox.blockSignals(False)
+
+        # Emit signal to update image display
+        width_value = self.window_slider.value()
+        level_value = self.level_slider.value()
+        self.windowLevelChanged.emit(width_value, level_value)
+
+    def updatePhotometricInfo(self, dicom_path):
+        """Update photometric interpretation info from DICOM file"""
+        try:
+            from libs.dicom_io import DICOMReader
+
+            photometric = DICOMReader.getPhotometricInterpretation(dicom_path)
+            self.photo_info_label.setText(photometric)
+        except Exception:
+            self.photo_info_label.setText("UNKNOWN")
+
+    def getDisplayMode(self):
+        """Get current display mode setting"""
+        if self.force_invert_checkbox.isChecked():
+            return True  # Force invert
+        elif self.auto_invert_checkbox.isChecked():
+            return None  # Auto (based on photometric interpretation)
+        else:
+            return False  # No invert
 
     def getCurrentValues(self):
         """Get current window/level values"""
