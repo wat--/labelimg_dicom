@@ -88,21 +88,21 @@ class AdjustWindowLevelDialog(QDialog):
 
         # Define medical presets (width, level)
         self.medical_presets = {
-            "Lung (肺がん)": (1500, -600),  # デフォルト: 肺がん用
-            "Soft Tissue (軟組織)": (400, 40),
-            "Bone (骨)": (1500, 400),
-            "Abdomen (腹部)": (400, 50),
-            "Brain (脳)": (100, 50),
-            "Mediastinum (縦隔)": (500, 50),
-            "Liver (肝臓)": (160, 60),
-            "Custom (カスタム)": (1000, 200),
+            "Lung": (1500, -600),  # Default: Lung cancer
+            "Soft Tissue": (400, 40),
+            "Bone": (1500, 400),
+            "Abdomen": (400, 50),
+            "Brain": (100, 50),
+            "Mediastinum": (500, 50),
+            "Liver": (160, 60),
+            "Custom": (1000, 200),
         }
 
         for preset_name in self.medical_presets.keys():
             self.preset_combo.addItem(preset_name)
 
         # Set default to lung cancer preset
-        self.preset_combo.setCurrentText("Lung (肺がん)")
+        self.preset_combo.setCurrentText("Lung")
         self.preset_combo.currentTextChanged.connect(self.applyPreset)
 
         preset_selection_layout.addWidget(self.preset_combo)
@@ -112,8 +112,8 @@ class AdjustWindowLevelDialog(QDialog):
         preset_buttons_layout = QGridLayout()
 
         # Quick preset buttons
-        self.lung_btn = QPushButton("肺がん")
-        self.lung_btn.clicked.connect(lambda: self.applyNamedPreset("Lung (肺がん)"))
+        self.lung_btn = QPushButton("Lung")
+        self.lung_btn.clicked.connect(lambda: self.applyNamedPreset("Lung"))
         self.lung_btn.setStyleSheet("""
             QPushButton {
                 background-color: #007bff;
@@ -128,9 +128,9 @@ class AdjustWindowLevelDialog(QDialog):
             }
         """)
 
-        self.soft_tissue_btn = QPushButton("軟組織")
+        self.soft_tissue_btn = QPushButton("Soft Tissue")
         self.soft_tissue_btn.clicked.connect(
-            lambda: self.applyNamedPreset("Soft Tissue (軟組織)")
+            lambda: self.applyNamedPreset("Soft Tissue")
         )
         self.soft_tissue_btn.setStyleSheet("""
             QPushButton {
@@ -145,8 +145,8 @@ class AdjustWindowLevelDialog(QDialog):
             }
         """)
 
-        self.bone_btn = QPushButton("骨")
-        self.bone_btn.clicked.connect(lambda: self.applyNamedPreset("Bone (骨)"))
+        self.bone_btn = QPushButton("Bone")
+        self.bone_btn.clicked.connect(lambda: self.applyNamedPreset("Bone"))
         self.bone_btn.setStyleSheet("""
             QPushButton {
                 background-color: #ffc107;
@@ -390,7 +390,7 @@ class AdjustWindowLevelDialog(QDialog):
     def popUp(self, w_width=None, w_level=None, move=True):
         # If no values provided, use lung cancer preset as default
         if w_width is None or w_level is None:
-            w_width, w_level = self.medical_presets["Lung (肺がん)"]
+            w_width, w_level = self.medical_presets["Lung"]
 
         # Set initial values
         self.setValues(w_width, w_level)
@@ -401,7 +401,7 @@ class AdjustWindowLevelDialog(QDialog):
                 self.preset_combo.setCurrentText(preset_name)
                 break
         else:
-            self.preset_combo.setCurrentText("Custom (カスタム)")
+            self.preset_combo.setCurrentText("Custom")
 
         if move:
             self.move(QCursor.pos())
@@ -412,9 +412,9 @@ class AdjustWindowLevelDialog(QDialog):
 
     def resetValues(self):
         """Reset to lung cancer preset (default)"""
-        lung_preset_values = self.medical_presets["Lung (肺がん)"]
+        lung_preset_values = self.medical_presets["Lung"]
         self.setValues(*lung_preset_values)
-        self.preset_combo.setCurrentText("Lung (肺がん)")
+        self.preset_combo.setCurrentText("Lung")
         self.windowLevelChanged.emit(*lung_preset_values)
 
     def onDisplayModeChanged(self):
