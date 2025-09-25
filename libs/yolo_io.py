@@ -35,6 +35,12 @@ class YOLOWriter:
         ymin = box["ymin"]
         ymax = box["ymax"]
 
+        # Check for zero division to prevent errors
+        if self.imgSize[0] == 0 or self.imgSize[1] == 0:
+            raise ValueError(
+                f"Invalid image size: {self.imgSize}. Width and height must be greater than zero."
+            )
+
         xcen = float((xmin + xmax)) / 2 / self.imgSize[1]
         ycen = float((ymin + ymax)) / 2 / self.imgSize[0]
 
@@ -50,17 +56,21 @@ class YOLOWriter:
         out_class_file = None  # Update class list .txt
 
         if targetFile is None:
+            # Ensure directory exists
+            filename_dir = os.path.dirname(os.path.abspath(self.filename))
+            os.makedirs(filename_dir, exist_ok=True)
+
             out_file = open(self.filename + TXT_EXT, "w", encoding=ENCODE_METHOD)
-            classesFile = os.path.join(
-                os.path.dirname(os.path.abspath(self.filename)), "classes.txt"
-            )
+            classesFile = os.path.join(filename_dir, "classes.txt")
             out_class_file = open(classesFile, "w")
 
         else:
+            # Ensure directory exists for target file
+            target_dir = os.path.dirname(os.path.abspath(targetFile))
+            os.makedirs(target_dir, exist_ok=True)
+
             out_file = codecs.open(targetFile, "w", encoding=ENCODE_METHOD)
-            classesFile = os.path.join(
-                os.path.dirname(os.path.abspath(targetFile)), "classes.txt"
-            )
+            classesFile = os.path.join(target_dir, "classes.txt")
             out_class_file = open(classesFile, "w")
 
         for box in self.boxlist:

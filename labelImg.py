@@ -1205,6 +1205,7 @@ class MainWindow(QMainWindow, WindowMixin):
                     self.labelHist,
                     self.lineColor.getRgb(),
                     self.fillColor.getRgb(),
+                    imageShape=self.imageShape,
                 )
             else:
                 self.labelFile.save(

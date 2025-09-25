@@ -37,46 +37,81 @@ class LabelFile(object):
         image = QImage()
         image.load(imagePath)
         if imageShape is None:
-            imageShape = [image.height(), image.width(),
-                          1 if image.isGrayscale() else 3]
-        writer = PascalVocWriter(imgFolderName, imgFileName,
-                                 imageShape, localImgPath=imagePath)
+            imageShape = [
+                image.height(),
+                image.width(),
+                1 if image.isGrayscale() else 3,
+            ]
+        writer = PascalVocWriter(
+            imgFolderName, imgFileName, imageShape, localImgPath=imagePath
+        )
         writer.verified = self.verified
 
         for shape in shapes:
-            points = shape['points']
-            label = shape['label']
+            points = shape["points"]
+            label = shape["label"]
             # Add Chris
-            difficult = int(shape['difficult'])
+            difficult = int(shape["difficult"])
             bndbox = LabelFile.convertPoints2BndBox(points)
-            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
+            writer.addBndBox(
+                bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult
+            )
 
         writer.save(targetFile=filename)
         return
 
-    def saveYoloFormat(self, filename, shapes, imagePath, imageData, classList,
-                            lineColor=None, fillColor=None, databaseSrc=None):
+    def saveYoloFormat(
+        self,
+        filename,
+        shapes,
+        imagePath,
+        imageData,
+        classList,
+        lineColor=None,
+        fillColor=None,
+        databaseSrc=None,
+        imageShape=None,
+    ):
         imgFolderPath = os.path.dirname(imagePath)
         imgFolderName = os.path.split(imgFolderPath)[-1]
         imgFileName = os.path.basename(imagePath)
-        #imgFileNameWithoutExt = os.path.splitext(imgFileName)[0]
-        # Read from file path because self.imageData might be empty if saving to
-        # Pascal format
-        image = QImage()
-        image.load(imagePath)
-        imageShape = [image.height(), image.width(),
-                      1 if image.isGrayscale() else 3]
-        writer = YOLOWriter(imgFolderName, imgFileName,
-                                 imageShape, localImgPath=imagePath)
+        # imgFileNameWithoutExt = os.path.splitext(imgFileName)[0]
+
+        # Handle DICOM files and other special cases where imageShape is provided
+        if imageShape is not None:
+            # Use provided imageShape (from DICOM or other sources)
+            finalImageShape = imageShape
+        else:
+            # Read from file path because self.imageData might be empty if saving to
+            # Pascal format
+            image = QImage()
+            image.load(imagePath)
+            finalImageShape = [
+                image.height(),
+                image.width(),
+                1 if image.isGrayscale() else 3,
+            ]
+
+        # Validate image dimensions
+        if finalImageShape[0] == 0 or finalImageShape[1] == 0:
+            raise ValueError(
+                f"Invalid image dimensions: {finalImageShape}. Cannot save YOLO format with zero width or height."
+            )
+
+        writer = YOLOWriter(
+            imgFolderName, imgFileName, finalImageShape, localImgPath=imagePath
+        )
         writer.verified = self.verified
 
         for shape in shapes:
-            points = shape['points']
-            label = shape['label']
+            points = shape["points"]
+            label = shape["label"]
             # Add Chris
-            difficult = int(shape['difficult'])
+            difficult = int(shape["difficult"])
             bndbox = LabelFile.convertPoints2BndBox(points)
-            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
+            writer.addBndBox(
+                bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult
+            )
 
         writer.save(targetFile=filename, classList=classList)
         return
@@ -84,7 +119,7 @@ class LabelFile(object):
     def toggleVerify(self):
         self.verified = not self.verified
 
-    ''' ttf is disable
+    """ ttf is disable
     def load(self, filename):
         import json
         with open(filename, 'rb') as f:
@@ -111,7 +146,7 @@ class LabelFile(object):
                     imagePath=imagePath,
                     imageData=b64encode(imageData)),
                     f, ensure_ascii=True, indent=2)
-    '''
+    """
 
     @staticmethod
     def isLabelFile(filename):
@@ -120,10 +155,10 @@ class LabelFile(object):
 
     @staticmethod
     def convertPoints2BndBox(points):
-        xmin = float('inf')
-        ymin = float('inf')
-        xmax = float('-inf')
-        ymax = float('-inf')
+        xmin = float("inf")
+        ymin = float("inf")
+        xmax = float("-inf")
+        ymax = float("-inf")
         for p in points:
             x = p[0]
             y = p[1]
